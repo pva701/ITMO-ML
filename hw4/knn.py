@@ -16,6 +16,8 @@ def knn(x, data, labels, k, weight_f='uniform', metric_f='l2', transform_f='id',
     if scaler is not None:
         x = scaler.transform(x.reshape(1, -1)).ravel()
         data = scaler.transform(data)
+#    print(weight_f, metric_f, transform_f, scaler, **params)
+
     mapped_x = transform_f(x)
     f = lambda t: metric_f(mapped_x, transform_f(t))
     arr = np.apply_along_axis(f, 1, data)
@@ -27,9 +29,9 @@ def knn(x, data, labels, k, weight_f='uniform', metric_f='l2', transform_f='id',
         counter[l] += w
     return max(counter.keys(), key=counter.get)
 
-def batchKnn(data, labels, k, xs=None, **params):
+def batchKnn(data, labels, xs=None, k=3, **params):
     if xs is not None:
-        classifier = lambda x: knn(x, data, labels, **params)
+        classifier = lambda x: knn(x, data, labels, k, **params)
         return np.apply_along_axis(classifier, 1, xs)
     else:
         n = data.shape[0]
@@ -39,3 +41,11 @@ def batchKnn(data, labels, k, xs=None, **params):
             labels_ = np.delete(labels, i)
             ret[i] = knn(data[i], data_, labels_, k, **params)
         return ret
+
+class KNN:
+    def fit(self, xs, ys, **params):
+        self.xs, self.ys = xs, ys
+        self.params = params
+        return self
+    def predict(self, xs):
+        return batchKnn(self.xs, self.ys, xs=xs, **self.params)
